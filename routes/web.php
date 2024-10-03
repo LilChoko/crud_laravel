@@ -1,6 +1,7 @@
 <?php
 use App\Http\Controllers\AuthController;
 use App\Http\Controllers\TaskController;
+use App\Http\Controllers\AlumnoController;
 use Illuminate\Support\Facades\Auth;
 use Illuminate\Support\Facades\Route;
 
@@ -19,3 +20,9 @@ Route::post('/logout', function () {
     Auth::logout();  // Cierra la sesión del usuario
     return redirect('/login');  // Redirige a la página de login
 })->name('logout');
+
+Route::get('/admin/settings', function () {
+    return view('adminlte.alta'); // Cambia 'adminlte.alta' por la ruta a tu vista
+})->name('admin.settings');
+
+Route::post('/admin/settings', [AlumnoController::class, 'store'])->name('alumnos.store');
