@@ -5,33 +5,22 @@ namespace App\Http\Controllers;
 use App\Models\Task;
 use Illuminate\Http\RedirectResponse;
 use Illuminate\Http\Request;
-use Illuminate\Support\Facades\Redirect;
 use Illuminate\View\View;
+use PhpMqtt\Client\Facades\MQTT;
 
 class TaskController extends Controller
 {
-    /**
-     * Display a listing of the resource.
-     */
     public function index(): View
     {
         $tasks = Task::paginate(5);
         return view('index', compact('tasks'));
-        // $tasks = Task::latest()->paginate(5);
-        // return view('index', ['tasks' => $tasks]);
     }
 
-    /**
-     * Show the form for creating a new resource.
-     */
     public function create(): View
     {
         return view('create');
     }
 
-    /**
-     * Store a newly created resource in storage.
-     */
     public function store(Request $request): RedirectResponse
     {
         $request->validate([
@@ -39,29 +28,19 @@ class TaskController extends Controller
             'description' => 'required'
         ]);
 
-        Task::create($request->all());
+        $task = Task::create($request->all());
+
+        // Publicar un mensaje MQTT al crear la tarea
+        $this->sendMessage($task->id, 'created');
+
         return redirect()->route('tasks.index')->with('success', 'Nueva tarea creada exitosamente');
     }
 
-    /**
-     * Display the specified resource.
-     */
-    public function show(Task $task)
-    {
-        //
-    }
-
-    /**
-     * Show the form for editing the specified resource.
-     */
     public function edit(Task $task): View
     {
         return view('edit', ['task' => $task]);
     }
 
-    /**
-     * Update the specified resource in storage.
-     */
     public function update(Request $request, Task $task): RedirectResponse
     {
         $request->validate([
@@ -69,15 +48,26 @@ class TaskController extends Controller
             'description' => 'required'
         ]);
         $task->update($request->all());
-        return redirect()->route('tasks.index')->with('success', 'Nueva tarea actualizada exitosamente');
+
+        // Publicar un mensaje MQTT al actualizar la tarea
+        $this->sendMessage($task->id, 'updated');
+
+        return redirect()->route('tasks.index')->with('success', 'Tarea actualizada exitosamente');
     }
 
-    /**
-     * Remove the specified resource from storage.
-     */
-    public function destroy(Task $task)
+    public function destroy(Task $task): RedirectResponse
     {
+        // Publicar un mensaje MQTT antes de eliminar la tarea
+        $this->sendMessage($task->id, 'deleted');
+
         $task->delete();
+
         return redirect()->route('tasks.index')->with('success', 'Tarea eliminada exitosamente');
+    }
+
+    // Método para enviar mensajes MQTT
+    public function sendMessage($taskId, $action)
+    {
+        MQTT::publish('tasks/' . $action, json_encode(['task_id' => $taskId]));
     }
 }
