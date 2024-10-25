@@ -29,6 +29,32 @@
             </div>
         @endif
 
+        <!-- Sección de Filtro -->
+        <div class="col-12 mt-4">
+            <form action="{{ route('tasks.index') }}" method="GET">
+                <div class="row">
+                    <!-- Campo de búsqueda -->
+                    <div class="col-md-6">
+                        <input type="text" name="search" class="form-control" placeholder="Buscar por tarea o descripción" value="{{ request('search') }}">
+                    </div>
+
+                    <!-- Ordenar por fecha -->
+                    <div class="col-md-4">
+                        <select name="sort" class="form-control">
+                            <option value="desc" {{ request('sort') == 'desc' ? 'selected' : '' }}>Última tarea creada</option>
+                            <option value="asc" {{ request('sort') == 'asc' ? 'selected' : '' }}>Primera tarea creada</option>
+                        </select>
+                    </div>
+
+                    <!-- Botón de búsqueda -->
+                    <div class="col-md-2">
+                        <button type="submit" class="btn btn-primary">Aplicar Filtros</button>
+                    </div>
+                </div>
+            </form>
+        </div>
+
+        <!-- Tabla de tareas -->
         <div class="col-12 mt-4">
             <table class="table table-bordered">
                 <tr class="bg-secondary">
@@ -62,7 +88,7 @@
                     </tr>
                 @endforeach
             </table>
-            {{ $tasks->links() }}
+            {{ $tasks->appends(request()->input())->links() }}
         </div>
 
     </div>

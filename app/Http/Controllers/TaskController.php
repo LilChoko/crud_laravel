@@ -10,16 +10,36 @@ use PhpMqtt\Client\Facades\MQTT;
 
 class TaskController extends Controller
 {
-    public function index(): View
+    public function index(Request $request): View
     {
-        $tasks = Task::paginate(5);
-        return view('index', compact('tasks'));
+        // Obtener los parámetros de búsqueda y orden
+        $search = $request->input('search');
+        $sort = $request->input('sort', 'desc'); // Por defecto, orden descendente (última tarea creada)
+
+        // Consultar las tareas
+        $tasks = Task::query();
+
+        // Filtrar las tareas según la búsqueda
+        if ($search) {
+            $tasks->where('title', 'like', '%' . $search . '%')
+                ->orWhere('description', 'like', '%' . $search . '%');
+        }
+
+        // Ordenar las tareas según la fecha de creación
+        $tasks->orderBy('created_at', $sort);
+
+        // Paginar los resultados
+        $tasks = $tasks->paginate(5);
+
+        // Retornar la vista con las tareas, el orden y la búsqueda
+        return view('index', compact('tasks', 'sort', 'search'));
     }
 
     public function create(): View
     {
         return view('create');
     }
+
 
     public function store(Request $request): RedirectResponse
     {
